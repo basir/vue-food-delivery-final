@@ -1,14 +1,5 @@
 <template>
   <v-container>
-    <v-snackbar v-model="snackbar" timeout="2000">
-      {{ product.name }} added to basket.
-
-      <template v-slot:action="{ attrs }">
-        <v-btn color="blue" text v-bind="attrs" @click="snackbar = false">
-          <router-link to="/cart">Checkout</router-link>
-        </v-btn>
-      </template>
-    </v-snackbar>
     <v-dialog v-model="isOpen" max-width="600px">
       <v-card>
         <v-card-title>
@@ -37,22 +28,62 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-progress-circular
-      indeterminate
-      color="primary"
-      v-if="loading"
-    ></v-progress-circular>
-    <v-alert v-else-if="error" dense outlined type="error">{{ error }}</v-alert>
-    <v-row e-else dense>
-      <v-col v-for="product in products" :key="product._id" cols="4">
-        <v-card @click.stop="showModal(product)">
-          <v-img :src="product.image"> </v-img>
-          <v-card-title v-text="product.name"></v-card-title>
-          <v-card-subtitle>{{ product.calorie }} Cal</v-card-subtitle>
-          <v-card-text class="text-h5"> ${{ product.price }} </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
+    <h1 class="text-h3">Order Items</h1>
+    <v-alert v-if="cartItems.length === 0" dense outlined type="error"
+      >Cart is empty</v-alert
+    >
+
+    <v-simple-table v-else>
+      <template v-slot:default>
+        <thead>
+          <tr>
+            <th class="text-left">Name</th>
+            <th class="text-left">Quantity</th>
+            <th class="text-left">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="item in cartItems"
+            :key="item.name"
+            @click="showModal(item)"
+          >
+            <td>{{ item.name }}</td>
+            <td>
+              {{ item.quantity }}
+              <v-btn icon>
+                <v-icon>mdi-pencil</v-icon>
+              </v-btn>
+            </td>
+            <td>${{ item.price }}</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td>
+              <div class="text-h5">Subtotal: ${{ itemsPrice }}</div>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td></td>
+            <td></td>
+            <td>
+              <v-btn
+                :disabled="itemsPrice == 0"
+                @click="proceed"
+                depressed
+                color="primary"
+              >
+                Choose your location
+              </v-btn>
+            </td>
+          </tr>
+        </tfoot>
+      </template>
+    </v-simple-table>
   </v-container>
 </template>
 
@@ -60,8 +91,6 @@
 import axios from "axios";
 export default {
   data: () => ({
-    loading: true,
-    error: "",
     quantity: "1",
     quantities: [...Array(10).keys()].map((x) => `${x + 1}`),
     product: {},
@@ -75,18 +104,17 @@ export default {
         (x) => x.name === this.product.name
       );
     },
+    cartItems() {
+      return this.$store.state.Cart.cartItems;
+    },
+    itemsPrice() {
+      return this.$store.state.Cart.itemsPrice;
+    },
   },
   methods: {
     async fetch() {
-      try {
-        this.loading = true;
-        const { data } = await axios.get(`/api/products`);
-        this.products = data;
-        this.loading = false;
-      } catch (err) {
-        this.error = err.message;
-        this.loading = false;
-      }
+      const { data } = await axios.get(`/api/products`);
+      this.products = data;
     },
     showModal(product) {
       this.product = product;
@@ -104,9 +132,12 @@ export default {
       this.$store.dispatch("Cart/remove", this.product);
       this.isOpen = false;
     },
+    proceed() {
+      this.$router.push("/location");
+    },
   },
   mounted() {
     this.fetch();
   },
 };
-</script>
+</script> 
