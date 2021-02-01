@@ -88,13 +88,13 @@
 
         <v-stepper-content step="3">
           <div id="paypal-button"></div>
-          <!-- <div v-if="!paypalButtonRendered">
+          <div v-if="!paypalButtonRendered">
             <v-progress-circular
               indeterminate
               color="primary"
             ></v-progress-circular>
             Loading PayPal
-          </div> -->
+          </div>
           <v-btn v-if="!paypalButtonRendered" depressed @click="step = 2">
             Back
           </v-btn>
