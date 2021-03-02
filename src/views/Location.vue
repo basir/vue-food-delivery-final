@@ -276,7 +276,7 @@ export default {
           this.paypalClientId = data;
           const script = document.createElement("script");
           script.type = "text/javascript";
-          script.src = `https://www.paypalobjects123.com/api/checkout.js`;
+          script.src = `https://www.paypalobjects.com/api/checkout.js`;
           script.async = true;
           script.onload = () => {
             this.loadingPaypal = false;
