@@ -38,6 +38,9 @@
               </l-control>
               <v-geosearch :options="geosearchOptions"></v-geosearch>
               <l-marker :lat-lng="currentCenter"></l-marker>
+              <l-control position="bottomright">
+                <v-btn @click="getUserLocation()" depressed>My Location </v-btn>
+              </l-control>
             </l-map>
           </div>
           <div class="d-flex justify-center pt-6">
@@ -121,7 +124,7 @@ Icon.Default.mergeOptions({
 const defaultLocation = latLng(45.516, -73.56);
 
 export default {
-  name: "Example",
+  name: "Location",
   components: {
     LMap,
     LTileLayer,
@@ -138,8 +141,8 @@ export default {
         provider: new OpenStreetMapProvider(),
         style: "bar",
       },
-      zoom: 16,
       center: defaultLocation,
+      zoom: 16,
       url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
       attribution:
         '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
@@ -168,27 +171,43 @@ export default {
       paypalButtonRendered: false,
     };
   },
+  computed: {
+    itemsPrice() {
+      return this.$store.state.Cart.itemsPrice;
+    },
+  },
   mounted() {
     this.step = 1;
   },
   methods: {
     initMap() {
       this.map = this.$refs.myMap.mapObject;
-      this.map.invalidateSize();
-      this.getUserLocation();
+      setTimeout(() => {
+        this.center = defaultLocation;
+        this.map.invalidateSize();
+        this.loadingMap = false;
+      }, 100);
     },
     getUserLocation() {
       if (!navigator.geolocation) {
         alert("Geolocation os not supported by this browser");
       } else {
-        navigator.geolocation.getCurrentPosition((position) => {
-          this.center = latLng(
-            position.coords.latitude,
-            position.coords.longitude
-          );
-          this.map.invalidateSize();
-          this.loadingMap = false;
-        });
+        this.loadingMap = true;
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            this.center = latLng(
+              position.coords.latitude,
+              position.coords.longitude
+            );
+            this.map.setView(
+              latLng(position.coords.latitude, position.coords.longitude)
+            );
+            this.loadingMap = false;
+            console.log(position.coords.latitude, position.coords.longitude);
+          },
+          (err) => console.log(err),
+          { maximumAge: 60000, timeout: 5000, enableHighAccuracy: true }
+        );
       }
     },
     nextStep() {},
@@ -197,6 +216,7 @@ export default {
       this.currentZoom = zoom;
     },
     centerUpdate(center) {
+      console.log("centerUpdate", center);
       this.currentCenter = center;
     },
     showLongText() {
@@ -216,12 +236,10 @@ export default {
       if (to === false) {
         window.paypal.Button.render(
           {
-            env:
-              process.env.NODE_ENV === "development" ? "sandbox" : "production",
+            env: process.env.NODE_ENV === "development" ? "sandbox" : "sandbox",
             client: {
-              [process.env.NODE_ENV === "development"
-                ? "sandbox"
-                : "production"]: this.paypalClientId || "sb",
+              [process.env.NODE_ENV === "development" ? "sandbox" : "sandbox"]:
+                this.paypalClientId || "sb",
             },
 
             locale: "en_US",
@@ -238,7 +256,7 @@ export default {
                 transactions: [
                   {
                     amount: {
-                      total: "11",
+                      total: this.itemsPrice,
                       currency: "USD",
                     },
                   },
