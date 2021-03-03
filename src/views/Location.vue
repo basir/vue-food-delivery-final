@@ -234,6 +234,7 @@ export default {
   watch: {
     loadingPaypal(to) {
       if (to === false) {
+        console.log(this.itemsPrice.toFixed(2));
         window.paypal.Button.render(
           {
             env: process.env.NODE_ENV === "development" ? "sandbox" : "sandbox",
@@ -251,12 +252,12 @@ export default {
 
             commit: true,
 
-            payment: function (data, actions) {
+            payment: (data, actions) => {
               return actions.payment.create({
                 transactions: [
                   {
                     amount: {
-                      total: this.itemsPrice,
+                      total: this.itemsPrice.toFixed(2),
                       currency: "USD",
                     },
                   },
@@ -264,7 +265,7 @@ export default {
               });
             },
 
-            onAuthorize: function (data, actions) {
+            onAuthorize: (data, actions) => {
               return actions.payment.execute().then(function () {
                 window.alert("Thank you for your purchase!");
               });
